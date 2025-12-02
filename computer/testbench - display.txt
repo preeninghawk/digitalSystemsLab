@@ -1,0 +1,44 @@
+`timescale 1ns/1ps
+
+module tb_display_hex_8bit;
+
+    reg        clk;
+    reg        reset;
+    reg [7:0]  value;
+
+    wire [7:0] an;
+    wire [6:0] seg;
+
+    // DUT
+    display_hex_8bit DUT (
+        .clk(clk),
+        .reset(reset),
+        .value(value),
+        .an(an),
+        .seg(seg)
+    );
+
+    // Clock
+    always #5 clk = ~clk;
+
+    initial begin
+        clk   = 1'b0;
+        reset = 1'b1;
+        value = 8'h00;
+
+        // Waveform dump
+        $dumpfile("tb_display_hex_8bit.vcd");
+        $dumpvars(0, tb_display_hex_8bit);
+
+        #20 reset = 1'b0;
+
+        // Try several values
+        #100 value = 8'h3A;   // should show 3 and A
+        #100 value = 8'hF5;   // F and 5
+        #100 value = 8'h7C;   // 7 and C
+        #100 value = 8'h12;   // 1 and 2
+
+        #300 $finish;
+    end
+
+endmodule

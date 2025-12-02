@@ -1,0 +1,42 @@
+// 5) 2-digit HEX display for 8-bit value
+//    - active-LOW anodes "an[7:0]" (only an[0] and an[1] used)
+//    - multiplexes between low & high nibble
+
+module display_hex_8bit(
+    input        clk,
+    input        reset,
+    input  [7:0] value,
+    output reg [7:0] an,   // digit enables (active-LOW)
+    output [6:0] seg      // segment lines (active-LOW)
+);
+    reg        sel;        // 0 = low nibble, 1 = high nibble
+    reg [15:0] div_cnt;
+
+    // Simple clock divider for multiplexing
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            div_cnt <= 16'd0;
+            sel     <= 1'b0;
+        end else begin
+            div_cnt <= div_cnt + 16'd1;
+            if (div_cnt == 16'd0)
+                sel <= ~sel;    // toggle which digit is active
+        end
+    end
+
+    wire [3:0] nibble = sel ? value[7:4] : value[3:0];
+
+    hex_to_7seg u_hex (
+        .hex(nibble),
+        .seg(seg)
+    );
+
+    always @* begin
+        // all digits off by default (active-LOW)
+        an = 8'b1111_1111;
+        if (sel)
+            an[1] = 1'b0;  // high nibble on digit 1
+        else
+            an[0] = 1'b0;  // low nibble on digit 0
+    end
+endmodule
