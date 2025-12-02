@@ -42,3 +42,4 @@ module tb_display_hex_8bit;
     end
 
 endmodule
+
