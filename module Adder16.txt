@@ -1,0 +1,7 @@
+module Adder16 (
+    input  [15:0] a,      // First operand
+    input  [15:0] b,      // Second operand
+    output [15:0] sum     // Sum output
+);
+    assign sum = a + b;
+endmodule
