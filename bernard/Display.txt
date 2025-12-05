@@ -7,20 +7,21 @@ module DisplayModule(
     input  wire        CLK,          // system clock
     input  wire        RST,          // synchronous reset (active high)
     input  wire [15:0] value,        // value to display (dot product result)
-    output reg  [7:0]  an,           // digit enables
-    output reg  [7:0]  seg           // segments
+    output reg  [7:0]  an,           // digit enables (active low)
+    output reg  [7:0]  seg           // segments (active low: {dp,g,f,e,d,c,b,a})
 );
 
     // ----------------------------------------
-    // 1. Convert 16-bit value to 5 decimal digits
+    // 1. Decimal digit registers
     // ----------------------------------------
-    // value range: 0 ~ 65535 -> 5 digits (d4 d3 d2 d1 d0)
     reg [3:0] d0, d1, d2, d3, d4;   // least significant to most
 
+    // These must be declared at module level in Verilog
+    integer v;
+    integer r;
+
+    // Convert 16-bit value to 5 decimal digits
     always @* begin
-        // use integer for division; synthesizable for small widths
-        integer v;
-        integer r;
         v = value;
 
         // d4: ten-thousands
@@ -133,15 +134,15 @@ module DisplayModule(
                     seg <= seg_encode(digit[4]);
                 end
                 3'd5: begin
-                    an  <= 8'b11011111;      // digit 5 
+                    an  <= 8'b11011111;      // digit 5 (unused -> blank)
                     seg <= 8'b11111111;      // blank
                 end
                 3'd6: begin
-                    an  <= 8'b10111111;      // digit 6 
+                    an  <= 8'b10111111;      // digit 6 (unused)
                     seg <= 8'b11111111;      // blank
                 end
                 3'd7: begin
-                    an  <= 8'b01111111;      // digit 7 
+                    an  <= 8'b01111111;      // digit 7 (unused / MSB)
                     seg <= 8'b11111111;      // blank
                 end
                 default: begin
