@@ -1,11 +1,10 @@
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
-module tb_display();
+module tb_display;
 
     reg CLK;
     reg RST;
     reg [15:0] value;
-
     wire [7:0] an;
     wire [7:0] seg;
 
@@ -19,44 +18,34 @@ module tb_display();
         .seg(seg)
     );
 
-    // Clock: 100 MHz
+    // 100 MHz clock
     initial begin
         CLK = 0;
         forever #5 CLK = ~CLK;
     end
 
     initial begin
-        // Waveform dump
         $dumpfile("tb_display.vcd");
         $dumpvars(0, tb_display);
 
-        RST = 1;
-        value = 0;
+        RST   = 1;
+        value = 16'd0;
         #50 RST = 0;
 
-        // Test 1: 12345
         value = 16'd12345;
-        $display("Displaying 12345");
-        #3000000;   // 3 ms
+        #3_000_000;
 
-        // Test 2: Largest number
         value = 16'd65535;
-        $display("Displaying 65535");
-        #3000000;
+        #3_000_000;
 
-        // Test 3: Small number
         value = 16'd7;
-        $display("Displaying 7");
-        #3000000;
+        #3_000_000;
 
-        // Sweep
         for (i = 0; i < 10000; i = i + 2500) begin
             value = i;
-            $display("Displaying %0d", i);
-            #3000000;  // allow full refresh
+            #3_000_000;
         end
 
-        $display("Test Completed.");
         $finish;
     end
 
