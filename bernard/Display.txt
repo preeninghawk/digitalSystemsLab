@@ -1,11 +1,11 @@
 `timescale 1ns / 1ps
 
 module DisplayModule(
-    input  wire        CLK,
-    input  wire        RST,      // synchronous, active HIGH
-    input  wire [15:0] value,    // number to display
-    output reg  [7:0]  an,       // digit enables (active LOW)
-    output reg  [7:0]  seg       // segments (active LOW: {dp,g,f,e,d,c,b,a})
+    input  wire        CLK,       // system clock
+    input  wire        RST,       // synchronous reset (active HIGH)
+    input  wire [15:0] value,     // value to display
+    output reg  [7:0]  an,        // digit enables (active-LOW)
+    output reg  [7:0]  seg        // segments  (active-LOW: {dp,g,f,e,d,c,b,a})
 );
 
     reg [3:0] bcd0, bcd1, bcd2, bcd3, bcd4;   // ones..ten-thousands
@@ -15,6 +15,7 @@ module DisplayModule(
     integer i;
 
     always @(*) begin
+        // init
         d0   = 4'd0;
         d1   = 4'd0;
         d2   = 4'd0;
@@ -22,39 +23,42 @@ module DisplayModule(
         d4   = 4'd0;
         temp = value;
 
-        // 16-bit Double-Dabble
+        // 16 iterations for 16-bit value
         for (i = 0; i < 16; i = i + 1) begin
+            // add 3 if >= 5
             if (d0 >= 5) d0 = d0 + 3;
             if (d1 >= 5) d1 = d1 + 3;
             if (d2 >= 5) d2 = d2 + 3;
             if (d3 >= 5) d3 = d3 + 3;
             if (d4 >= 5) d4 = d4 + 3;
 
+            // shift left the whole {digits, temp} bundle
             {d4, d3, d2, d1, d0, temp} = {d4, d3, d2, d1, d0, temp} << 1;
         end
 
-        bcd0 = d0;  // ones
-        bcd1 = d1;  // tens
-        bcd2 = d2;  // hundreds
-        bcd3 = d3;  // thousands
-        bcd4 = d4;  // ten-thousands
+        // latch outputs
+        bcd0 = d0;   // ones
+        bcd1 = d1;   // tens
+        bcd2 = d2;   // hundreds
+        bcd3 = d3;   // thousands
+        bcd4 = d4;   // ten-thousands
     end
 
-    reg [3:0] digit[0:7];
+    reg [3:0] digit [0:7];
 
     always @(*) begin
-        digit[0] = bcd0;
+        digit[0] = bcd0;        // least significant digit
         digit[1] = bcd1;
         digit[2] = bcd2;
         digit[3] = bcd3;
-        digit[4] = bcd4;
-        digit[5] = 4'd15; // blank
-        digit[6] = 4'd15; // blank
-        digit[7] = 4'd15; // blank
+        digit[4] = bcd4;        // most significant of the value
+        digit[5] = 4'd15;       // blank
+        digit[6] = 4'd15;       // blank
+        digit[7] = 4'd15;       // blank
     end
 
     reg [15:0] refresh;
-    reg [2:0]  scan;
+    reg [2:0]  scan;   // which digit (0..7) is active
 
     always @(posedge CLK) begin
         if (RST) begin
@@ -63,7 +67,7 @@ module DisplayModule(
         end else begin
             refresh <= refresh + 16'd1;
             if (refresh == 16'd0)
-                scan <= scan + 3'd1;   // next digit
+                scan <= scan + 3'd1;   // next digit each overflow
         end
     end
 
@@ -88,14 +92,14 @@ module DisplayModule(
     reg [7:0] an_raw;
 
     always @(*) begin
-        an_raw      = 8'b1111_1111; // all digits OFF
-        an_raw[scan]= 1'b0;         // current digit ON
+        an_raw       = 8'b11111111; // all digits OFF
+        an_raw[scan] = 1'b0;        // current digit ON (active-LOW)
     end
 
     always @(posedge CLK) begin
         if (RST) begin
-            an  <= 8'b1111_1111;
-            seg <= 8'b1111_1111;
+            an  <= 8'b11111111;     // all OFF
+            seg <= 8'b11111111;
         end else begin
             an  <= an_raw;
             seg <= seg_raw;
@@ -103,3 +107,4 @@ module DisplayModule(
     end
 
 endmodule
+
