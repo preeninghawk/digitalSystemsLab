@@ -1,155 +1,101 @@
-// ========================================
-// DISPLAY MODULE: 8-digit 7-segment decimal display
-// ========================================
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
 module DisplayModule(
-    input  wire        CLK,          // system clock
-    input  wire        RST,          // synchronous reset (active high)
-    input  wire [15:0] value,        // value to display (dot product result)
-    output reg  [7:0]  an,           // digit enables (active low)
-    output reg  [7:0]  seg           // segments (active low: {dp,g,f,e,d,c,b,a})
+    input  wire        CLK,
+    input  wire        RST,
+    input  wire [15:0] value,
+    output reg  [7:0]  an,      // digit enable (active-low)
+    output reg  [7:0]  seg      // active-low segments {dp,g,f,e,d,c,b,a}
 );
 
-    // ----------------------------------------
-    // 1. Decimal digit registers
-    // ----------------------------------------
-    reg [3:0] d0, d1, d2, d3, d4;   // least significant to most
+    reg [3:0] bcd0, bcd1, bcd2, bcd3, bcd4;   // 5 digits
+    integer i;
 
-    // These must be declared at module level in Verilog
-    integer v;
-    integer r;
+    always @(*) begin
+        // working registers: 5 digits + 16-bit input
+        reg [3:0] d0, d1, d2, d3, d4;
+        reg [15:0] temp;
 
-    // Convert 16-bit value to 5 decimal digits
-    always @* begin
-        v = value;
+        d0 = 0; d1 = 0; d2 = 0; d3 = 0; d4 = 0;
+        temp = value;
 
-        // d4: ten-thousands
-        d4 = v / 10000;
-        r  = v % 10000;
+        // Double Dabble shift algorithm (16 iterations)
+        for (i = 0; i < 16; i = i + 1) begin
+            // Add 3 if >= 5
+            if (d0 >= 5) d0 = d0 + 3;
+            if (d1 >= 5) d1 = d1 + 3;
+            if (d2 >= 5) d2 = d2 + 3;
+            if (d3 >= 5) d3 = d3 + 3;
+            if (d4 >= 5) d4 = d4 + 3;
 
-        // d3: thousands
-        d3 = r / 1000;
-        r  = r % 1000;
+            // Shift left: bring in next MSB from temp
+            {d4, d3, d2, d1, d0, temp} =
+                {d4, d3, d2, d1, d0, temp} << 1;
+        end
 
-        // d2: hundreds
-        d2 = r / 100;
-        r  = r % 100;
-
-        // d1: tens
-        d1 = r / 10;
-
-        // d0: ones
-        d0 = r % 10;
+        // Output BCD digits
+        bcd0 = d0;
+        bcd1 = d1;
+        bcd2 = d2;
+        bcd3 = d3;
+        bcd4 = d4;
     end
 
-    // Pack digits into an array for easier indexing
-    reg [3:0] digit [0:7];
 
-    always @* begin
-        digit[0] = d0;  // least significant
-        digit[1] = d1;
-        digit[2] = d2;
-        digit[3] = d3;
-        digit[4] = d4;
-        // higher digits unused -> blank or reserved
-        digit[5] = 4'd0;
-        digit[6] = 4'd0;
-        digit[7] = 4'd0;
+    reg [3:0] digit[0:7];
+
+    always @(*) begin
+        digit[0] = bcd0;   // ones
+        digit[1] = bcd1;   // tens
+        digit[2] = bcd2;   // hundreds
+        digit[3] = bcd3;   // thousands
+        digit[4] = bcd4;   // ten-thousands
+        digit[5] = 4'd15;  // blank
+        digit[6] = 4'd15;  // blank
+        digit[7] = 4'd15;  // blank
     end
 
-    // ----------------------------------------
-    // 2. Scan through digits (multiplexing)
-    // ----------------------------------------
-    reg [2:0]  scan_idx;          // which digit is active 0..7
-    reg [15:0] refresh_cnt;       // simple clock divider
+    reg [15:0] refresh;
+    reg [2:0] scan;
 
-    // refresh counter & scan index
     always @(posedge CLK) begin
         if (RST) begin
-            refresh_cnt <= 16'd0;
-            scan_idx    <= 3'd0;
+            refresh <= 0;
+            scan <= 0;
         end else begin
-            refresh_cnt <= refresh_cnt + 1'b1;
-            if (refresh_cnt == 16'd0) begin
-                // when counter wraps, move to next digit
-                scan_idx <= scan_idx + 1'b1;
-            end
+            refresh <= refresh + 1;
+            if (refresh == 0)
+                scan <= scan + 1;
         end
     end
 
-    // ----------------------------------------
-    // 3. 7-seg decoder (active-low) for one digit
-    // ----------------------------------------
-    function [7:0] seg_encode;
-        input [3:0] val;
+    function [7:0] seg_encode(input [3:0] d);
         begin
-            // seg = {dp,g,f,e,d,c,b,a} (active low)
-            case (val)
-                4'd0: seg_encode = 8'b11000000; // 0
-                4'd1: seg_encode = 8'b11111001; // 1
-                4'd2: seg_encode = 8'b10100100; // 2
-                4'd3: seg_encode = 8'b10110000; // 3
-                4'd4: seg_encode = 8'b10011001; // 4
-                4'd5: seg_encode = 8'b10010010; // 5
-                4'd6: seg_encode = 8'b10000010; // 6
-                4'd7: seg_encode = 8'b11111000; // 7
-                4'd8: seg_encode = 8'b10000000; // 8
-                4'd9: seg_encode = 8'b10010000; // 9
-                default: seg_encode = 8'b11111111; // blank
+            case(d)
+                4'd0: seg_encode = 8'b11000000;
+                4'd1: seg_encode = 8'b11111001;
+                4'd2: seg_encode = 8'b10100100;
+                4'd3: seg_encode = 8'b10110000;
+                4'd4: seg_encode = 8'b10011001;
+                4'd5: seg_encode = 8'b10010010;
+                4'd6: seg_encode = 8'b10000010;
+                4'd7: seg_encode = 8'b11111000;
+                4'd8: seg_encode = 8'b10000000;
+                4'd9: seg_encode = 8'b10010000;
+                default: seg_encode = 8'b11111111;  // blank
             endcase
         end
     endfunction
 
-    // ----------------------------------------
-    // 4. Drive current digit & segments
-    // ----------------------------------------
+
     always @(posedge CLK) begin
         if (RST) begin
-            an  <= 8'b11111111;   // all digits off
-            seg <= 8'b11111111;   // all segments off
+            an  <= 8'b11111111;
+            seg <= 8'b11111111;
         end else begin
-            // default: all digits off
-            an <= 8'b11111111;
-
-            case (scan_idx)
-                3'd0: begin
-                    an  <= 8'b11111110;      // digit 0 ON (LSB)
-                    seg <= seg_encode(digit[0]);
-                end
-                3'd1: begin
-                    an  <= 8'b11111101;      // digit 1
-                    seg <= seg_encode(digit[1]);
-                end
-                3'd2: begin
-                    an  <= 8'b11111011;      // digit 2
-                    seg <= seg_encode(digit[2]);
-                end
-                3'd3: begin
-                    an  <= 8'b11110111;      // digit 3
-                    seg <= seg_encode(digit[3]);
-                end
-                3'd4: begin
-                    an  <= 8'b11101111;      // digit 4
-                    seg <= seg_encode(digit[4]);
-                end
-                3'd5: begin
-                    an  <= 8'b11011111;      // digit 5 (unused -> blank)
-                    seg <= 8'b11111111;      // blank
-                end
-                3'd6: begin
-                    an  <= 8'b10111111;      // digit 6 (unused)
-                    seg <= 8'b11111111;      // blank
-                end
-                3'd7: begin
-                    an  <= 8'b01111111;      // digit 7 (unused / MSB)
-                    seg <= 8'b11111111;      // blank
-                end
-                default: begin
-                    an  <= 8'b11111111;
-                    seg <= 8'b11111111;
-                end
-            endcase
+            an <= 8'b11111111;       // all digits OFF by default
+            an[scan] <= 1'b0;        // turn ON selected digit
+            seg <= seg_encode(digit[scan]);
         end
     end
 
