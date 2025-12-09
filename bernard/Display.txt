@@ -1,22 +1,30 @@
 `timescale 1ns / 1ps
 
-module DisplayModule(
+module DisplayModule #(
+    // If your segments turn ON with 0, keep SEG_ACTIVE_LOW = 1.
+    // If your segments turn ON with 1, set SEG_ACTIVE_LOW = 0.
+    parameter SEG_ACTIVE_LOW = 1,
+
+    // If your digit enable (an) turns ON with 0, keep AN_ACTIVE_LOW = 1.
+    // If your digit enable turns ON with 1, set AN_ACTIVE_LOW = 0.
+    parameter AN_ACTIVE_LOW  = 1
+)(
     input  wire        CLK,
-    input  wire        RST,      // synchronous reset (active high)
-    input  wire [15:0] value,    // binary input
-    output reg  [7:0]  an,       // digit enable (active-low)
-    output reg  [7:0]  seg       // segments (active-low: {dp,g,f,e,d,c,b,a})
+    input  wire        RST,          // synchronous reset, active high
+    input  wire [15:0] value,        // binary value to display
+    output reg  [7:0]  an,           // digit enables
+    output reg  [7:0]  seg           // segments {dp,g,f,e,d,c,b,a}
 );
 
-    reg [3:0] bcd0, bcd1, bcd2, bcd3, bcd4;   // final BCD digits
+    reg [3:0] bcd0, bcd1, bcd2, bcd3, bcd4;   // ones..ten-thousands
 
-    // Working registers for algorithm (must be module-level in Verilog)
+    // Working registers must be module-scope in Verilog
     reg [3:0] d0, d1, d2, d3, d4;
     reg [15:0] temp;
     integer i;
 
     always @(*) begin
-        // init working digits and temp
+        // init
         d0   = 4'd0;
         d1   = 4'd0;
         d2   = 4'd0;
@@ -24,7 +32,7 @@ module DisplayModule(
         d4   = 4'd0;
         temp = value;
 
-        // Double Dabble: 16 iterations for 16-bit input
+        // 16-bit Double-Dabble
         for (i = 0; i < 16; i = i + 1) begin
             // add 3 if >= 5
             if (d0 >= 5) d0 = d0 + 3;
@@ -33,33 +41,33 @@ module DisplayModule(
             if (d3 >= 5) d3 = d3 + 3;
             if (d4 >= 5) d4 = d4 + 3;
 
-            // shift left: {digits, temp} all together
+            // shift left everything
             {d4, d3, d2, d1, d0, temp} = {d4, d3, d2, d1, d0, temp} << 1;
         end
 
-        // latch into output BCD digits
-        bcd0 = d0;   // ones
-        bcd1 = d1;   // tens
-        bcd2 = d2;   // hundreds
-        bcd3 = d3;   // thousands
-        bcd4 = d4;   // ten-thousands
+        // latch to BCD outputs
+        bcd0 = d0;  // ones
+        bcd1 = d1;  // tens
+        bcd2 = d2;  // hundreds
+        bcd3 = d3;  // thousands
+        bcd4 = d4;  // ten-thousands
     end
 
     reg [3:0] digit [0:7];
 
     always @(*) begin
-        digit[0] = bcd0;    // least significant
+        digit[0] = bcd0;     // least significant
         digit[1] = bcd1;
         digit[2] = bcd2;
         digit[3] = bcd3;
         digit[4] = bcd4;
-        digit[5] = 4'd15;   // blank
-        digit[6] = 4'd15;   // blank
-        digit[7] = 4'd15;   // blank
+        digit[5] = 4'd15;    // blank
+        digit[6] = 4'd15;    // blank
+        digit[7] = 4'd15;    // blank
     end
 
-    reg [15:0] refresh;
-    reg [2:0]  scan;
+    reg [15:0] refresh;   // clock divider
+    reg [2:0]  scan;      // which digit 0..7 is active
 
     always @(posedge CLK) begin
         if (RST) begin
@@ -67,43 +75,55 @@ module DisplayModule(
             scan    <= 3'd0;
         end else begin
             refresh <= refresh + 16'd1;
-            if (refresh == 16'd0) begin
+            if (refresh == 16'd0)
                 scan <= scan + 3'd1;
-            end
         end
     end
 
-    function [7:0] seg_encode;
-        input [3:0] d;
-        begin
-            case (d)
-                4'd0: seg_encode = 8'b11000000; // 0
-                4'd1: seg_encode = 8'b11111001; // 1
-                4'd2: seg_encode = 8'b10100100; // 2
-                4'd3: seg_encode = 8'b10110000; // 3
-                4'd4: seg_encode = 8'b10011001; // 4
-                4'd5: seg_encode = 8'b10010010; // 5
-                4'd6: seg_encode = 8'b10000010; // 6
-                4'd7: seg_encode = 8'b11111000; // 7
-                4'd8: seg_encode = 8'b10000000; // 8
-                4'd9: seg_encode = 8'b10010000; // 9
-                default: seg_encode = 8'b11111111; // blank
-            endcase
-        end
-    endfunction
+    reg [7:0] seg_raw;   // internal active-low pattern
+
+    always @(*) begin
+        case (digit[scan])
+            4'd0: seg_raw = 8'b11000000; // 0
+            4'd1: seg_raw = 8'b11111001; // 1
+            4'd2: seg_raw = 8'b10100100; // 2
+            4'd3: seg_raw = 8'b10110000; // 3
+            4'd4: seg_raw = 8'b10011001; // 4
+            4'd5: seg_raw = 8'b10010010; // 5
+            4'd6: seg_raw = 8'b10000010; // 6
+            4'd7: seg_raw = 8'b11111000; // 7
+            4'd8: seg_raw = 8'b10000000; // 8
+            4'd9: seg_raw = 8'b10010000; // 9
+            default: seg_raw = 8'b11111111; // blank
+        endcase
+    end
+
+    reg [7:0] an_raw;   // internal active-low anode (0 = ON)
+
+    always @(*) begin
+        // default: all off
+        an_raw = 8'b1111_1111;
+        an_raw[scan] = 1'b0;   // turn current digit ON (active-low)
+    end
 
     always @(posedge CLK) begin
         if (RST) begin
-            an  <= 8'b11111111; // all off
-            seg <= 8'b11111111;
+            an  <= AN_ACTIVE_LOW  ? 8'b1111_1111 : 8'b0000_0000;
+            seg <= SEG_ACTIVE_LOW ? 8'b1111_1111 : 8'b0000_0000;
         end else begin
-            // all digits off by default
-            an  <= 8'b11111111;
-            // enable current digit (active low)
-            an[scan] <= 1'b0;
-            // drive segments for that digit
-            seg <= seg_encode(digit[scan]);
+            // digit enable
+            if (AN_ACTIVE_LOW)
+                an <= an_raw;        // already active-low
+            else
+                an <= ~an_raw;       // invert for active-high hardware
+
+            // segment lines
+            if (SEG_ACTIVE_LOW)
+                seg <= seg_raw;      // already active-low
+            else
+                seg <= ~seg_raw;     // invert for active-high hardware
         end
     end
 
 endmodule
+
