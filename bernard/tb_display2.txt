@@ -2,19 +2,15 @@
 
 module tb_display();
 
-    // DUT inputs
     reg CLK;
     reg RST;
     reg [15:0] value;
 
-    // DUT outputs
     wire [7:0] an;
     wire [7:0] seg;
 
-    // Loop variable must be declared at module level in Verilog
     integer i;
 
-    // Instantiate DisplayModule
     DisplayModule dut (
         .CLK(CLK),
         .RST(RST),
@@ -23,65 +19,43 @@ module tb_display();
         .seg(seg)
     );
 
-    // ------------------------------------------------------------
-    // Clock generator
-    // ------------------------------------------------------------
+    // Clock: 100 MHz
     initial begin
         CLK = 0;
-        forever #5 CLK = ~CLK;   // 100 MHz clock (10 ns period)
+        forever #5 CLK = ~CLK;
     end
 
-    // ------------------------------------------------------------
-    // Test stimulus
-    // ------------------------------------------------------------
     initial begin
-        // OPTIONAL: waveform dump (comment out if your simulator doesn't support)
+        // Waveform dump
         $dumpfile("tb_display.vcd");
         $dumpvars(0, tb_display);
 
-        // Initial values
-        RST   = 1;
+        RST = 1;
         value = 0;
+        #50 RST = 0;
 
-        #20;
-        RST = 0;
-
-        // ---------------------------------------
-        // Test 1: Display number 12345
-        // ---------------------------------------
-        #50;
+        // Test 1: 12345
         value = 16'd12345;
         $display("Displaying 12345");
+        #3000000;   // 3 ms
 
-        // Let display scan for a while
-        #200000; // enough time to cycle all 8 digits many times
-
-        // ---------------------------------------
-        // Test 2: Display maximum 65535
-        // ---------------------------------------
+        // Test 2: Largest number
         value = 16'd65535;
         $display("Displaying 65535");
+        #3000000;
 
-        #200000;
-
-        // ---------------------------------------
-        // Test 3: Display small number 7
-        // ---------------------------------------
+        // Test 3: Small number
         value = 16'd7;
         $display("Displaying 7");
+        #3000000;
 
-        #200000;
-
-        // ---------------------------------------
-        // Test 4: Sweep a few values
-        // ---------------------------------------
+        // Sweep
         for (i = 0; i < 10000; i = i + 2500) begin
-            value = i[15:0];
+            value = i;
             $display("Displaying %0d", i);
-            #150000;
+            #3000000;  // allow full refresh
         end
 
-        // Done
         $display("Test Completed.");
         $finish;
     end
