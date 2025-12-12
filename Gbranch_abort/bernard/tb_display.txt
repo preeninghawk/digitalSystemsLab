@@ -1,0 +1,87 @@
+`timescale 1ns / 1ps
+
+module tb_display();
+
+    // DUT inputs
+    reg CLK;
+    reg RST;
+    reg [15:0] value;
+
+    // DUT outputs
+    wire [7:0] an;
+    wire [7:0] seg;
+
+    // Instantiate DisplayModule
+    DisplayModule dut (
+        .CLK(CLK),
+        .RST(RST),
+        .value(value),
+        .an(an),
+        .seg(seg)
+    );
+
+    // ------------------------------------------------------------
+    // Clock generator
+    // ------------------------------------------------------------
+    initial begin
+        CLK = 0;
+        forever #5 CLK = ~CLK;   // 100 MHz clock
+    end
+
+    // ------------------------------------------------------------
+    // Test stimulus
+    // ------------------------------------------------------------
+    initial begin
+        // Waveform dump
+        $dumpfile("tb_display.vcd");
+        $dumpvars(0, tb_display);
+
+        // Initial values
+        RST = 1;
+        value = 0;
+
+        #20;
+        RST = 0;
+
+        // ---------------------------------------
+        // Test 1: Display number 12345
+        // ---------------------------------------
+        #50;
+        value = 16'd12345;
+        $display("Displaying 12345");
+
+        // Let display scan for a while
+        #200000; // enough time to cycle all 8 digits many times
+
+        // ---------------------------------------
+        // Test 2: Display maximum 65535
+        // ---------------------------------------
+        value = 16'd65535;
+        $display("Displaying 65535");
+
+        #200000;
+
+        // ---------------------------------------
+        // Test 3: Display small number 7
+        // ---------------------------------------
+        value = 16'd7;
+        $display("Displaying 7");
+
+        #200000;
+
+        // ---------------------------------------
+        // Test 4: Full sweep 0 → 9999
+        // ---------------------------------------
+        integer i;
+        for (i = 0; i < 10000; i = i + 2500) begin
+            value = i;
+            $display("Displaying %0d", i);
+            #150000;
+        end
+
+        // Done
+        $display("Test Completed.");
+        $finish;
+    end
+
+endmodule

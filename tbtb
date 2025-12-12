@@ -1,0 +1,108 @@
+`timescale 1ns/1ps
+
+module tb_term_project_top;
+
+    reg        CLK;
+    reg [7:0]  btn_sw;      //active-low buttons
+    wire [7:0] seg_COM;
+    wire [7:0] seg_DATA;
+    wire [7:0] led;
+
+    term_project_top dut(
+        .CLK(CLK),
+        .btn_sw(btn_sw),
+        .seg_COM(seg_COM),
+        .seg_DATA(seg_DATA),
+        .led(led)
+    );
+
+    //============================
+    // Clock
+    //============================
+    initial begin
+        CLK=1'b0;
+        forever #5 CLK=~CLK; //100MHz
+    end
+
+    //============================
+    // Button press helpers
+    // btn_sw[i] active-low:
+    //  - not pressed:1
+    //  - pressed:0
+    // dut inverts (~btn_sw[i]) so a "press" makes internal btn_* rise
+    //============================
+    task press_btn(input integer idx);
+        begin
+            btn_sw[idx]=1'b0;  //press
+            repeat(2) @(posedge CLK);
+            btn_sw[idx]=1'b1;  //release
+            repeat(2) @(posedge CLK);
+        end
+    endtask
+
+    //A=btn_zero(SW0),B=btn_one(SW1),C=btn_next(SW2),D=reset(SW3)
+    task pressA; begin press_btn(0); end endtask
+    task pressB; begin press_btn(1); end endtask
+    task pressC; begin press_btn(2); end endtask
+    task pressD; begin press_btn(3); end endtask
+
+    task send_byte(input [7:0] x);
+        integer i;
+        begin
+            for(i=7;i>=0;i=i-1) begin
+                if(x[i]==1'b0) begin
+                    pressA();
+                end
+                else begin
+                    pressB();
+                end
+            end
+        end
+    endtask
+
+    task enter_value_and_confirm(input [7:0] x);
+        begin
+            send_byte(x);
+            pressC(); //confirm when 8bits entered
+        end
+    endtask
+
+    //============================
+    // Test
+    //============================
+    integer k;
+    initial begin
+        btn_sw=8'hFF; //all unpressed
+
+        //reset
+        pressD();
+
+        //A vector: 8 elements
+        //Example: all 8'd1
+        for(k=0;k<8;k=k+1) begin
+            enter_value_and_confirm(8'd1);
+            $display("t=%0t A[%0d] entered, led(cur_value)=%0d",$time,k,led);
+        end
+
+        //B vector: 8 elements
+        //Example: all 8'd1
+        for(k=0;k<8;k=k+1) begin
+            enter_value_and_confirm(8'd1);
+            $display("t=%0t B[%0d] entered, led(cur_value)=%0d",$time,k,led);
+        end
+
+        //Wait for compute to finish
+        //Peek internal signals (ok in simulation)
+        wait(dut.u_comp.done==1'b1);
+        @(posedge CLK);
+
+        $display("DOT RESULT (u_comp.result)=%0d (0x%02h)",dut.u_comp.result,dut.u_comp.result);
+        $display("DISPLAY VALUE (u_ctrl.display_value)=%0d (0x%02h)",dut.u_ctrl.display_value,dut.u_ctrl.display_value);
+
+        //Let display run a bit
+        repeat(50) @(posedge CLK);
+
+        $finish;
+    end
+
+endmodule

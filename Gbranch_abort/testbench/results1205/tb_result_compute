@@ -1,0 +1,64 @@
+
+> DOT PRODUCT COMPUTATION TEST
+
+> [0] WR=0 SEL=0 keyIn=  0 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+
+> [20000] Writing Vector A...
+> [20000] WR=1 SEL=0 keyIn=  1 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [30000] WR=1 SEL=0 keyIn=  2 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [40000] WR=1 SEL=0 keyIn=  3 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [50000] WR=1 SEL=0 keyIn=  4 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [60000] WR=1 SEL=0 keyIn=  5 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [70000] WR=1 SEL=0 keyIn=  6 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [80000] WR=1 SEL=0 keyIn=  7 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [90000] WR=1 SEL=0 keyIn=  8 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [100000] WR=0 SEL=0 keyIn=  8 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> ---- DUMP VECTOR A ----
+> A[0] =   1
+> A[1] =   2
+> A[2] =   3
+> A[3] =   4
+> A[4] =   5
+> A[5] =   6
+> A[6] =   7
+> A[7] =   8
+
+> [110000] Writing Vector B...
+> [110000] WR=1 SEL=1 keyIn=  8 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [120000] WR=1 SEL=1 keyIn=  7 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [130000] WR=1 SEL=1 keyIn=  6 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [140000] WR=1 SEL=1 keyIn=  5 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [150000] WR=1 SEL=1 keyIn=  4 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [160000] WR=1 SEL=1 keyIn=  3 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [170000] WR=1 SEL=1 keyIn=  2 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [180000] WR=1 SEL=1 keyIn=  1 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [190000] WR=0 SEL=1 keyIn=  1 | RD=0 COMP=0 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> ---- DUMP VECTOR B ----
+> B[0] =   8
+> B[1] =   7
+> B[2] =   6
+> B[3] =   5
+> B[4] =   4
+> B[5] =   3
+> B[6] =   2
+> B[7] =   1
+
+> [200000] Starting dot product computation...
+> [200000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=1 DONE=0 | dataA=  0 dataB=  0 | RESULT=    0
+> [205000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=1 DONE=0 | dataA=  1 dataB=  8 | RESULT=    0
+> [210000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  1 dataB=  8 | RESULT=    0
+> [215000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  2 dataB=  7 | RESULT=    0
+> [225000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  3 dataB=  6 | RESULT=    0
+> [235000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  4 dataB=  5 | RESULT=    0
+> [245000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  5 dataB=  4 | RESULT=    0
+> [255000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  6 dataB=  3 | RESULT=    0
+> [265000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  7 dataB=  2 | RESULT=    0
+> [275000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=0 | dataA=  8 dataB=  1 | RESULT=    0
+> [285000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=1 | dataA=  1 dataB=  8 | RESULT=  120
+> [295000] WR=0 SEL=1 keyIn=  1 | RD=1 COMP=0 DONE=1 | dataA=  2 dataB=  7 | RESULT=  120
+
+> RESULT: Dot Product = 120
+> PASS
+
+
+

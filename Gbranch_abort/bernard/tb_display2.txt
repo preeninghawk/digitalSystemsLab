@@ -1,0 +1,70 @@
+`timescale 1ns / 1ps
+
+module tb_display;
+
+    reg CLK;
+    reg RST;
+    reg [15:0] value;
+
+    wire [7:0] an;
+    wire [7:0] seg;
+
+    integer i;
+
+    // Instantiate DUT
+    DisplayModule dut (
+        .CLK(CLK),
+        .RST(RST),
+        .value(value),
+        .an(an),
+        .seg(seg)
+    );
+
+    // ------------------------------------------------------------
+    // Clock: 100 MHz → 10 ns period
+    // ------------------------------------------------------------
+    initial begin
+        CLK = 0;
+        forever #5 CLK = ~CLK;
+    end
+
+    // ------------------------------------------------------------
+    // Test sequence
+    // ------------------------------------------------------------
+    initial begin
+        // Waveform dump (optional)
+        $dumpfile("tb_display.vcd");
+        $dumpvars(0, tb_display);
+
+        // Reset
+        RST   = 1;
+        value = 0;
+        #50 RST = 0;
+
+        // Display 12345
+        value = 16'd12345;
+        $display("TEST: Showing 12345");
+        #3_000_000;     // 3 ms, enough for multiple digit scans
+
+        // Display full-range max
+        value = 16'd65535;
+        $display("TEST: Showing 65535");
+        #3_000_000;
+
+        // Display small number
+        value = 16'd7;
+        $display("TEST: Showing 7");
+        #3_000_000;
+
+        // Sweep through values
+        for (i = 0; i < 10000; i = i + 2500) begin
+            value = i;
+            $display("TEST: Showing %0d", i);
+            #3_000_000;  // allow full multiplex refresh
+        end
+
+        $display("Simulation complete.");
+        $finish;
+    end
+
+endmodule

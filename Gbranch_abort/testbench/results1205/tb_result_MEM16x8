@@ -1,0 +1,74 @@
+
+> 
+> Starting MEM16x8 Memory Tests
+> 
+
+> Test 1: Writing to all 16 addresses...
+>   Writing ADDR=0, DATA=0
+>   Writing ADDR=1, DATA=17
+>   Writing ADDR=2, DATA=34
+>   Writing ADDR=3, DATA=51
+>   Writing ADDR=4, DATA=68
+>   Writing ADDR=5, DATA=85
+>   Writing ADDR=6, DATA=102
+>   Writing ADDR=7, DATA=119
+>   Writing ADDR=8, DATA=136
+>   Writing ADDR=9, DATA=153
+>   Writing ADDR=10, DATA=170
+>   Writing ADDR=11, DATA=187
+>   Writing ADDR=12, DATA=204
+>   Writing ADDR=13, DATA=221
+>   Writing ADDR=14, DATA=238
+>   Writing ADDR=15, DATA=255
+>   Write complete.
+
+> Test 2: Reading from all 16 addresses...
+>   PASS: ADDR=0, Read=0 (Expected=0)
+>   PASS: ADDR=1, Read=17 (Expected=17)
+>   PASS: ADDR=2, Read=34 (Expected=34)
+>   PASS: ADDR=3, Read=51 (Expected=51)
+>   PASS: ADDR=4, Read=68 (Expected=68)
+>   PASS: ADDR=5, Read=85 (Expected=85)
+>   PASS: ADDR=6, Read=102 (Expected=102)
+>   PASS: ADDR=7, Read=119 (Expected=119)
+>   PASS: ADDR=8, Read=136 (Expected=136)
+>   PASS: ADDR=9, Read=153 (Expected=153)
+>   PASS: ADDR=10, Read=170 (Expected=170)
+>   PASS: ADDR=11, Read=187 (Expected=187)
+>   PASS: ADDR=12, Read=204 (Expected=204)
+> INFO: [USF-XSim-96] XSim completed. Design snapshot 'MEM16x8_tb_behav' loaded.
+> INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+> launch_simulation: Time (s): cpu = 00:00:06 ; elapsed = 00:00:07 . Memory (MB): peak = 1095.215 ; gain = 14.738
+> run 10 us
+>   PASS: ADDR=13, Read=221 (Expected=221)
+>   PASS: ADDR=14, Read=238 (Expected=238)
+>   PASS: ADDR=15, Read=255 (Expected=255)
+
+> Test 3: Overwriting addresses 5, 10, 15...
+>   Writing ADDR=5, DATA=255
+>   Writing ADDR=10, DATA=128
+>   Writing ADDR=15, DATA=0
+>   Reading back overwritten addresses...
+>   PASS: ADDR=5, Read=255
+>   PASS: ADDR=10, Read=128
+>   PASS: ADDR=15, Read=0
+
+> Test 4: Verify other addresses unchanged...
+>   PASS: ADDR=0 unchanged, Read=0
+>   PASS: ADDR=7 unchanged, Read=119
+
+> Test 5: Rapid write/read cycles...
+>   PASS: Rapid W/R at ADDR=0, Read=100
+>   PASS: Rapid W/R at ADDR=1, Read=101
+>   PASS: Rapid W/R at ADDR=2, Read=102
+>   PASS: Rapid W/R at ADDR=3, Read=103
+
+> Test 6: Multiple writes to same address...
+>   Write 1: ADDR=8, DATA=50
+>   Write 2: ADDR=8, DATA=75
+>   Write 3: ADDR=8, DATA=100
+>   PASS: Final value at ADDR=8 is 100
+
+> 
+> ALL TESTS PASSED!
+> 
