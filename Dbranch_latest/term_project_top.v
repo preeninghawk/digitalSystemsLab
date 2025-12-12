@@ -40,7 +40,7 @@ module term_project_top(
     wire [7:0]  display_value;
 
     wire        mode_compute;
-
+    wire [7:0] cur_input_value;
     // Input Unit
     input_unit u_input(
         .clk         (CLK),
@@ -84,7 +84,7 @@ module term_project_top(
     );
 
     assign mem_addr_4 = mode_compute ? comp_mem_addr : ctrl_mem_addr;
-    assign mem_wr     = mode_compute ? comp_mem_wr   : ctrl_mem_wr;
+    assign mem_wr = mode_compute ? 1'b0 : ctrl_mem_wr;
 
     assign mem_data_in = input_value;
 
